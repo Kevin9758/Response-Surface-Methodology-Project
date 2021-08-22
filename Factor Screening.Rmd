@@ -1,0 +1,157 @@
+---
+title: "Factor Screening"
+output: pdf_document
+---
+
+
+```{r include = FALSE}
+
+netflixffdp <- read.csv("netflixffd.csv", header = TRUE)
+netflixffdc <- read.csv("netflixffd2.csv", header = TRUE)
+
+netflixffdp$Prev.Length[netflixffdp$Prev.Length == 100] <- -1
+netflixffdp$Prev.Length[netflixffdp$Prev.Length == 120] <- 1
+
+netflixffdp$Match.Score[netflixffdp$Match.Score == 80] <- -1
+netflixffdp$Match.Score[netflixffdp$Match.Score == 100] <- 1
+
+netflixffdp$Tile.Size[netflixffdp$Tile.Size == 0.1] <- -1
+netflixffdp$Tile.Size[netflixffdp$Tile.Size == 0.3] <- 1
+
+netflixffdc$Prev.Length[netflixffdc$Prev.Length == 100] <- -1
+netflixffdc$Prev.Length[netflixffdc$Prev.Length == 120] <- 1
+
+netflixffdc$Match.Score[netflixffdc$Match.Score == 80] <- -1
+netflixffdc$Match.Score[netflixffdc$Match.Score == 100] <- 1
+
+netflixffdc$Tile.Size[netflixffdc$Tile.Size == 0.1] <- -1
+netflixffdc$Tile.Size[netflixffdc$Tile.Size == 0.3] <- 1
+
+
+m.factorial <- lm(Browse.Time ~  Prev.Length + Match.Score + Tile.Size , data = netflixffdp)
+
+summary(m.factorial)
+
+
+netflix <- rbind(netflixffdp, netflixffdc)
+
+
+m.full <- lm(Browse.Time ~  Prev.Length * Match.Score * Tile.Size , data = netflix)
+
+summary(m.full)
+
+
+reduced = subset(netflix, select = -c(Prev.Type, Tile.Size))
+
+m.reduced <- lm(Browse.Time ~  Prev.Length * Match.Score  , data = reduced)
+
+summary(m.reduced)
+
+
+
+```
+
+
+
+I began by trying a $2^{3-1}$ fractional factorial design with design generator
+Tile.Size = Prev.Length:Match.Score, resulting in the principle fraction design.
+Being a fractional factorial design, it only has half of the 8 conditions in a full $2^3$ design. However, each main 
+effect is aliased with a two factor interaction effect. 
+
+The high levels for tile size, match score, and preview length are 0.3, 100, 120
+and the low levels are 0.1, 80, 100, respectively.
+After simulating the data and fitting the model, I found
+the output provided p-values associated with t-tests of the
+hypothesis $$H_0 : \beta = 0  \  \textrm{vs}  \  H_A : \beta \neq 0$$ for each regression
+coefficient in the model. The p-values for each main effect was significant. 
+However, due to confounding from the aliasing, there is no way to conclude if
+each main effect was really significant, or if it was due to a two factor interaction
+effect. 
+
+```{r echo = FALSE}
+
+Pvalues_fractional <- c("<2e-16","<2e-16","<2e-16")
+
+Factors_fractional <- c("Preview Length", "Match Score", "Tile Size")
+
+df1 <- data.frame(Factors_fractional,Pvalues_fractional)
+# head(df1)
+
+knitr::kable(df1, format = "markdown")
+
+```
+
+Thus, I decided to sacrifice some efficiency for accuracy and simulated
+the other 4 conditions of the full $2^3$ model, which resulted in the complementary
+fraction design. 
+Thus, with all 8 conditions, I analyzed the experiment as a full $2^3$ design without any confounding.
+The output provided p-values associated with t-tests of the
+hypothesis $$H_0 : \beta = 0  \  \textrm{vs}  \  H_A : \beta \neq 0$$ for each regression
+coefficient in the model. The p-value for tile size was 0.787 > 0.01 so it is 
+not significant at the 1% level. In addition, all 2 factor interaction effects that included tile size
+are also not significant at a 1% level since their p-values are greater than 0.01
+as well. Thus I concluded that tile size does not significantly influence the
+response variable and I excluded it in future experiments.
+
+
+```{r echo = FALSE}
+
+Pvalues_full <- c("<2e-16","<2e-16","0.787","<2e-16","0.613","0.709","0.342")
+Factors_full <- c("Preview Length", "Match Score", "Tile Size", "Prev.Length:Match.Score"
+              , "Prev.Length:Tile.Size", "Match.Score:Tile.Size", 
+              "Prev.Length:Match.Score:Tile.Size")
+
+df2 <- data.frame(Factors_full,Pvalues_full)
+# head(df2)
+
+knitr::kable(df2, format = "markdown")
+
+```
+
+We can get the effects for the active factors by multiplying their $\hat\beta$ 
+estimates by 2.
+
+Preview Length : $2\hat\beta$ = 1.76624. Thus, as compared to when preview length
+is 100, when preview length is 120, we expect the average browsing time to increase
+by 1.76624 minutes
+
+Match Score : $2\hat\beta$ = 1.85906. Thus, as compared to when match score
+is 80, when preview length is 100, we expect the average browsing time to increase
+by 1.85906. minutes
+
+
+```{r echo = FALSE}
+par(mfrow = c(1, 2))
+# m.full <- lm(Browse.Time ~  Prev.Length * Match.Score * Tile.Size , data = netflix)
+# 
+# summary(m.full)
+
+moi.by.P <- aggregate(x = netflix$Browse.Time, by = list(Preview.Length = netflix$Prev.Length), FUN = mean)
+plot(x = c(-1, 1), y = moi.by.P$x, pch = 16, main = " Main effect Preview Length",
+     ylab = "Avg Browsing Time)", xlab = "Preview Length", xaxt = "n")
+lines(x = c(-1, 1), y = moi.by.P$x)
+axis(side = 1, at = c(-1, 1), labels = c("100", "120"))
+
+moi.by.M <- aggregate(x = netflix$Browse.Time, by = list(Match.Score = netflix$Match.Score), FUN = mean)
+plot(x = c(-1, 1), y = moi.by.M$x, pch = 16, main = " Main effect Match Score",
+     ylab = "Avg Browsing Time)", xlab = "Match Score", xaxt = "n")
+lines(x = c(-1, 1), y = moi.by.M$x)
+axis(side = 1, at = c(-1, 1), labels = c("80", "100"))
+
+
+```
+
+The main effects plots agree with the results from earlier. Browsing time seems
+to increase as match score increases from 80 to 100 and preview length increases
+from 100 to 120.
+
+In conclusion, I have found that tile size does not significantly influence the
+average browsing time, and I will exclude it in further phases. The factors
+that I have found that significantly influence browsing time
+are preview length and match score.
+
+
+
+
+
+

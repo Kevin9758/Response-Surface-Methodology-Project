@@ -1,0 +1,39 @@
+---
+title: "Executive Summary"
+output: pdf_document
+---
+
+
+
+  Throughout this project, I have attempted to minimize the browsing time of
+Netflix users through finding the optimal configuration of factors that 
+significantly influence the browsing time. During each additional phase
+of this project, I utilized information from prior phases and experiments.
+
+In Phase 1 : Factor Screening, I first attempted to use a $2^{3-1}$ fractional factorial
+design to determine which factors significantly influence the response. However,
+due to confounding caused by aliasing, I decided to sacrifice efficiency for
+accuracy and use the $2^3$ factorial design. Through my experiments, I found
+that the factors that significantly influence the browsing time are preview length
+and match score.
+
+In Phase 2 : Method of Steepest Descent, I wanted to move from the initial region
+of experimentation towards the vicinity of the optimum. Through my experiments, 
+I found that the optimal browsing time was somewhere in the vicinity of 90 seconds for
+preview length, and 70 for match score. I also sacrificed some efficiency for 
+accuracy in this phase, by taking some extra steps in Steepest Descent, in order
+to be more certain of my results.
+
+In Phase 3: Response Optimization, I decided to use a central composite
+design to fit a full second order response surface model in order to identify 
+the optimum. I chose my high and low factor levels based on a spherical design,
+since the estimate of the response surface at each condition would be equally
+precise. After fitting the full second order response surface and plotting the
+contour plots, I found that the optimum browsing time was when preview length
+was 70 seconds, and match score was 77%. In addition, the estimated browsing time
+at the optimum was 11.53 seconds.
+
+Thus, I came to the conclusion that Netflix should utilize preview lengths of 
+70 seconds and match scores of 77% in order to minimize the browsing time by users.
+
+

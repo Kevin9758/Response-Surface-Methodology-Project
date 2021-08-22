@@ -1,0 +1,71 @@
+---
+title: "Introduction"
+output: pdf_document
+---
+
+
+## The Problem
+
+The problem that I will be trying to solve is how to optimize the Netflix homepage
+by minimizing the browsing time needed for users before they find a show to watch.
+
+Although there are numerous possible factors that influence browsing time, 
+I will be considering 3 specific factors, tile size, match score and preview length.
+The tile size is the ratio of a show's tile height to the overall screen height.
+The match score is a prediction of how much a user will enjoy that particular show or movie.
+The preview length is the duration of a show or movie's preview when a user hovers
+over its tile.
+
+In order to minimize the browsing time, I will need to find an optimal configuration
+of these 3 factors that minimize the expected browsing time.
+
+The metric of interest for this problem is *average browsing time*, and the response
+variable is a continuous measurement for browsing time of a user.
+
+The data for my experiments are simulated from uploading a design matrix to an
+online response surface simulator that replicates the random assignment of 100
+users to each condition and the observation of their response variable.
+
+The region of operability for tile size is (0.1, 0.5).
+The region of operability for match score is (0, 100).
+The region of operability for preview length is (30, 120).
+
+I will begin with factor screening in order to determine which factors significantly
+influence the response variable. I will then use the method of steepest descent as
+well as conduct a central composite design and use a second order response surface
+model to find the optimal configuration of the factor levels. I will go over these
+steps in detail in the following sections. I will be using a 0.01% significance 
+threshold throughout this project since a p-value lower than 0.01 would present
+significant evidence against the null.
+
+
+
+## Goals of Response Surface Methodology
+
+
+Response Surface Methodology aims to conduct a sequence of experiments to obtain an
+optimal response variable, utilizing information from prior experiments to aid in 
+future ones.
+
+This goal can be achieved by characterizing the relationship between the 
+expected response and a subset of the design factors. The set of possible values 
+that this subset of the factors can take is called the region of operability.
+This region is where we explore and run our experiments to find the optimal
+condition.
+
+The function characterizing the relationship between the expected response
+and a subset of the design factors is unknown, so we fit models to approximate
+it. We typically use Taylor's Theorem and low order polynomials, especially
+in small localized regions of experiments, where low order polynomials should
+well approximate the function. However, second order models are used for response
+surface optimization since they are capable of modeling concavity/convexity.
+
+An example of response surface methodology is using factor screening to identify
+factors that significantly influence the response variable, and then following
+up by optimizing that response with the method of steepest ascent/descent
+and response surface designs. Each experiment conducted uses information from
+previous ones and the goal is to find the optimal operating condition.
+
+
+
+

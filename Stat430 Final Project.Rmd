@@ -1,0 +1,283 @@
+---
+title: "Stat430 Final Project"
+output: pdf_document
+---
+
+
+
+## Phase 1 Factor Screening
+
+```{r}
+
+
+netflixffd1 <- read.csv("netflixffd.csv", header = TRUE)
+netflixffd2 <- read.csv("netflixffd2.csv", header = TRUE)
+
+netflix <- rbind(netflixffd1, netflixffd2)
+
+
+```
+
+Since the p-value for tile size is > 0.01, we can see that it is not significant.
+We also see that the 2 factor interactions involving tile size are also not significant.
+
+blah blah hypothesis test and main effects plot
+talk about fractional factorial and lack of accuracy and fold over
+can hide unnesccary code
+match score and prev length are the significant factors
+can also mention results from factorial experiment
+
+
+
+\newpage
+
+
+
+## Phase 2 Method of Steepest Descent
+
+```{r}
+
+phase2data = subset(netflix, select = -c(Prev.Type, Tile.Size))
+
+# Function to create blues
+blue_palette <- colorRampPalette(c(rgb(247,251,255,maxColorValue = 255), rgb(8,48,107,maxColorValue = 255)))
+
+# Function for converting from natural units to coded units
+convert.N.to.C <- function(U,UH,UL){
+  x <- (U - (UH+UL)/2) / ((UH-UL)/2)
+  return(x)
+}
+
+# Function for converting from coded units to natural units
+convert.C.to.N <- function(x,UH,UL){
+  U <- x*((UH-UL)/2) + (UH+UL)/2
+  return(U)
+}
+
+center <- read.csv("center.csv", header = TRUE)
+
+center = subset(center, select = -c(Prev.Type, Tile.Size))
+
+phase2 <- rbind(phase2data, center)
+
+# Function to create x and y grids for contour plots 
+mesh <- function(x, y) { 
+  Nx <- length(x)
+  Ny <- length(y)
+  list(
+    x = matrix(nrow = Nx, ncol = Ny, data = x),
+    y = matrix(nrow = Nx, ncol = Ny, data = y, byrow = TRUE)
+  )
+}
+
+## curvature test to determine if experimental region is in vicinity of optimum
+
+table(phase2$Prev.Length, phase2$Match.Score)
+
+
+## Determine whether we're close to the optimum to begin with
+## (i.e, check whether the pure quadratic effect is significant)
+ph1p <- data.frame(y = phase2$Browse.Time,
+                  x1 = convert.N.to.C(U = phase2$Prev.Length, UH = 120, UL = 100),
+                  x2 = convert.N.to.C(U = phase2$Match.Score, UH = 100, UL = 80))
+ph1p$xPQ <- (ph1p$x1^2 + ph1p$x2^2)/2
+
+## Check the average browsing time in each condition:
+aggregate(ph1p$y, by = list(x1 = ph1p$x1, x2 = ph1p$x2), FUN = mean)
+
+## The difference in average browsing time in factorial conditions vs. the center 
+## point condition
+mean(ph1p$y[ph1p$xPQ != 0]) - mean(ph1p$y[ph1p$xPQ == 0])
+
+
+## Check to see if that's significant
+m <- lm(y~x1+x2+x1*x2+xPQ, data = ph1p)
+summary(m)
+
+
+## Fit the first order model to determine the direction of the path of 
+## steepest descent
+mp.fo <- lm(y~x1+x2, data = ph1p)
+beta0 <- coef(mp.fo)[1]
+beta1 <- coef(mp.fo)[2]
+beta2 <- coef(mp.fo)[3]
+grdp <- mesh(x = seq(convert.N.to.C(U = 30, UH = 120, UL = 100), 
+                    convert.N.to.C(U = 120, UH = 120, UL = 100), 
+                    length.out = 100), 
+            y = seq(convert.N.to.C(U = 0, UH = 100, UL = 80), 
+                    convert.N.to.C(U = 100, UH = 100, UL = 80), 
+                    length.out = 100))
+x1 <- grdp$x
+x2 <- grdp$y
+etap.fo <- beta0 + beta1*x1 + beta2*x2
+# 2D contour plot
+contour(x = seq(convert.N.to.C(U = 30, UH = 120, UL = 100), 
+                convert.N.to.C(U = 120, UH = 120, UL = 100), 
+                length.out = 100),
+        y = seq(convert.N.to.C(U = 0, UH = 100, UL = 80), 
+                convert.N.to.C(U = 100, UH = 100, UL = 80), 
+                length.out = 100), 
+        z = etap.fo, xlab = "x1 (Preview Length)", ylab = "x2 (Match Score",
+        nlevels = 15, col = blue_palette(15), labcex = 0.9, asp=1)
+abline(a = 0, b = beta2/beta1, lty = 2)
+points(x = 0, y = 0, col = "red", pch = 16)
+
+## Calculate the coordinates along this path that we will experiment at
+
+# The gradient vector
+g <- matrix(c(beta1, beta2), nrow = 1)
+
+# We will take steps of size 5 seconds in preview length. In coded units this is
+PL.step <- convert.N.to.C(U = 110 + 5, UH = 120, UL = 100)
+lamda <- PL.step/abs(beta1)
+
+
+## Step 0: The center point we've already observed
+x.old <- matrix(0, nrow=1, ncol=2)
+text(x = 0, y = 0+0.25, labels = "0")
+step0 <- data.frame(Prev.Length = convert.C.to.N(x = 0, UH = 120, UL = 100), 
+                 Match.Score = round(convert.C.to.N(x = 0, UH = 100, UL = 80)))
+
+## Step 1: 
+x.new <- x.old - lamda*g
+points(x = x.new[1,1], y = x.new[1,2], col = "red", pch = 16)
+text(x = x.new[1,1], y = x.new[1,2]+0.25, labels = "1")
+step1 <- data.frame(Prev.Length = convert.C.to.N(x = x.new[1,1], UH = 120, UL = 100), 
+                    Match.Score = round(convert.C.to.N(x = x.new[1,2], UH = 100, UL = 80)))
+
+## Step 2: 
+x.old <- x.new
+x.new <- x.old - lamda*g
+points(x = x.new[1,1], y = x.new[1,2], col = "red", pch = 16)
+text(x = x.new[1,1], y = x.new[1,2]+0.25, labels = "2")
+step2 <- data.frame(Prev.Length = convert.C.to.N(x = x.new[1,1], UH = 120, UL = 100), 
+                    Match.Score = round(convert.C.to.N(x = x.new[1,2], UH = 100, UL = 80)))
+
+## Step 3: 
+x.old <- x.new
+x.new <- x.old - lamda*g
+points(x = x.new[1,1], y = x.new[1,2], col = "red", pch = 16)
+text(x = x.new[1,1], y = x.new[1,2]+0.25, labels = "3")
+step3 <- data.frame(Prev.Length = convert.C.to.N(x = x.new[1,1], UH = 120, UL = 100), 
+                    Match.Score = round(convert.C.to.N(x = x.new[1,2], UH = 100, UL = 80)))
+
+## Step 4: 
+x.old <- x.new
+x.new <- x.old - lamda*g
+points(x = x.new[1,1], y = x.new[1,2], col = "red", pch = 16)
+text(x = x.new[1,1], y = x.new[1,2]+0.25, labels = "4")
+step4 <- data.frame(Prev.Length = convert.C.to.N(x = x.new[1,1], UH = 120, UL = 100), 
+                    Match.Score = round(convert.C.to.N(x = x.new[1,2], UH = 100, UL = 80)))
+
+## Step 5: 
+x.old <- x.new
+x.new <- x.old - lamda*g
+points(x = x.new[1,1], y = x.new[1,2], col = "red", pch = 16)
+text(x = x.new[1,1], y = x.new[1,2]+0.25, labels = "5")
+step5 <- data.frame(Prev.Length = convert.C.to.N(x = x.new[1,1], UH = 120, UL = 100), 
+                    Match.Score = round(convert.C.to.N(x = x.new[1,2], UH = 100, UL = 80)))
+
+## Step 6: 
+x.old <- x.new
+x.new <- x.old - lamda*g
+points(x = x.new[1,1], y = x.new[1,2], col = "red", pch = 16)
+text(x = x.new[1,1], y = x.new[1,2]+0.25, labels = "6")
+step6 <- data.frame(Prev.Length = convert.C.to.N(x = x.new[1,1], UH = 120, UL = 100), 
+                    Match.Score = round(convert.C.to.N(x = x.new[1,2], UH = 100, UL = 80)))
+
+## Step 7:
+x.old <- x.new
+x.new <- x.old - lamda*g
+points(x = x.new[1,1], y = x.new[1,2], col = "red", pch = 16)
+text(x = x.new[1,1], y = x.new[1,2]+0.25, labels = "7")
+step7 <- data.frame(Prev.Length = convert.C.to.N(x = x.new[1,1], UH = 120, UL = 100), 
+                    Match.Score = round(convert.C.to.N(x = x.new[1,2], UH = 100, UL = 80)))
+
+pstdf.cond <- data.frame(Step = 0:7, rbind(step0, step1, step2, step3, step4, step5, step6, step7))
+pstdf.cond
+
+
+
+## Load the data associated with the steepest descent search
+ptsdf <- read.csv("ptsdf.csv", header = TRUE)
+ptsdf = subset(ptsdf, select = -c(Prev.Type, Tile.Size))
+
+phase3 <- rbind(ptsdf, center)
+
+
+## Calculate the average browsing time in each of these conditions and find the 
+## condition that minimizes it
+pstdf.means <- aggregate(phase3$Browse.Time, 
+                        by = list(Prev.Length = phase3$Prev.Length, 
+                                  Match.Score = phase3$Match.Score), 
+                        FUN = mean)
+
+ plot(x = 0:7, y = rev(pstdf.means$x),
+     type = "l", xlab = "Step Number", ylab = "Average Browsing Time")
+ points(x = 0:7, y = rev(pstdf.means$x),
+       col = "red", pch = 16)
+
+pstdf.cond[pstdf.cond$Step == 4,]
+
+
+p3final <- read.csv("p3.csv", header = TRUE)
+ph2.5 <- data.frame(y = p3final$Browse.Time,
+                  x1 = convert.N.to.C(U = p3final$Prev.Length, UH = 100, UL = 80),
+                  x2 = convert.N.to.C(U = p3final$Match.Score, UH = 80, UL = 60))
+ph2.5$xPQ <- (ph2.5$x1^2 + ph2.5$x2^2)/2
+
+## Check the average browsing time in each condition:
+aggregate(ph2.5$y, by = list(x1 = ph2.5$x1, x2 = ph2.5$x2), FUN = mean)
+
+## The difference in average browsing time in factorial conditions vs. the center 
+## point condition
+mean(ph2.5$y[ph2.5$xPQ != 0]) - mean(ph2.5$y[ph2.5$xPQ == 0])
+
+## Check to see if that's significant
+m <- lm(y~x1+x2+x1*x2+xPQ, data = ph2.5)
+summary(m)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\newpage
+
+## Phase 3 Response Optimization
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
