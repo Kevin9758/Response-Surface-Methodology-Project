@@ -27,12 +27,6 @@
 
 
 
-\newpage
-
-
-
-
-```{r include = FALSE}
 
 netflixffdp <- read.csv("netflixffd.csv", header = TRUE)
 netflixffdc <- read.csv("netflixffd2.csv", header = TRUE)
@@ -77,7 +71,7 @@ summary(m.reduced)
 
 
 
-```
+
 
 
 
@@ -96,7 +90,7 @@ summary(m.reduced)
 # each main effect was really significant, or if it was due to a two factor interaction
 # effect. 
 
-```{r echo = FALSE}
+
 
 Pvalues_fractional <- c("<2e-16","<2e-16","<2e-16")
 
@@ -122,7 +116,7 @@ knitr::kable(df1, format = "markdown")
 # response variable and I excluded it in future experiments.
 # 
 
-```{r echo = FALSE}
+
 
 Pvalues_full <- c("<2e-16","<2e-16","0.787","<2e-16","0.613","0.709","0.342")
 Factors_full <- c("Preview Length", "Match Score", "Tile Size", "Prev.Length:Match.Score"
@@ -134,7 +128,7 @@ df2 <- data.frame(Factors_full,Pvalues_full)
 
 knitr::kable(df2, format = "markdown")
 
-```
+
 
 # We can get the effects for the active factors by multiplying their $\hat\beta$ 
 # estimates by 2.
@@ -148,7 +142,7 @@ knitr::kable(df2, format = "markdown")
 # by 1.85906. minutes
 
 
-```{r echo = FALSE}
+
 par(mfrow = c(1, 2))
 # m.full <- lm(Browse.Time ~  Prev.Length * Match.Score * Tile.Size , data = netflix)
 # 
@@ -183,7 +177,7 @@ axis(side = 1, at = c(-1, 1), labels = c("80", "100"))
 
 
 
-\newpage
+
 
 
 
@@ -211,7 +205,6 @@ axis(side = 1, at = c(-1, 1), labels = c("80", "100"))
 
 
 
-```{r echo = FALSE}
 
 netflixffd1 <- read.csv("netflixffd.csv", header = TRUE)
 netflixffd2 <- read.csv("netflixffd2.csv", header = TRUE)
@@ -281,7 +274,6 @@ df3 <- data.frame(coefficients,pvalues)
 #knitr::kable(df3, format = "markdown")
 
 
-```
 
 
 # My next step was to use the method of steepest descent in order to determine
@@ -293,7 +285,6 @@ df3 <- data.frame(coefficients,pvalues)
 # starting point is (0,0).
 
 
-```{r echo = FALSE}
 
 mp.fo <- lm(y~x1+x2, data = ph1p)
 beta0 <- coef(mp.fo)[1]
@@ -398,7 +389,7 @@ step7 <- data.frame(Prev.Length = convert.C.to.N(x = x.new[1,1], UH = 120, UL = 
 pstdf.cond <- data.frame(Step = 0:7, rbind(step0, step1, step2, step3, step4, step5, step6, step7))
 #pstdf.cond
 
-```
+
 
 
 # Since preview length can only be changed in increments of 5, I decided that the
@@ -410,7 +401,6 @@ pstdf.cond <- data.frame(Step = 0:7, rbind(step0, step1, step2, step3, step4, st
 # following steps ended up with higher average browsing time.
 
 
-```{r echo = FALSE}
 
 ## Load the data associated with the steepest descent search
 ptsdf <- read.csv("ptsdf.csv", header = TRUE)
@@ -451,7 +441,6 @@ ph2.5$xPQ <- (ph2.5$x1^2 + ph2.5$x2^2)/2
 m <- lm(y~x1+x2+x1*x2+xPQ, data = ph2.5)
 #summary(m)
 
-```
 
 
 # I found that step 4 corresponded to the lowest observed average browsing time.
@@ -470,7 +459,6 @@ m <- lm(y~x1+x2+x1*x2+xPQ, data = ph2.5)
 # preview length, and 70% for match score.
 
 
-\newpage
 
 
 
@@ -486,7 +474,6 @@ m <- lm(y~x1+x2+x1*x2+xPQ, data = ph2.5)
 # order response surface model, and hence identification of the optimum.
 
 
-```{r echo = FALSE}
 
 # Function to create blues
 blue_palette <- colorRampPalette(c(rgb(247,251,255,maxColorValue = 255), rgb(8,48,107,maxColorValue = 255)))
@@ -514,7 +501,7 @@ mesh <- function(x, y) {
 }
 
 
-```
+
 
 
 # I chose the high and low levels of the factors based on the center point
@@ -523,7 +510,7 @@ mesh <- function(x, y) {
 # order to ensure the estimate of the response surface at each condition is
 # equally precise.
 
-```{r echo = FALSE}
+
 
 ccdata <- read.csv("sphere.csv", header = TRUE)
 
@@ -539,7 +526,7 @@ df3 <- data.frame(Condition.Num = pi_hat$condition.num,
 knitr::kable(df3, format = "markdown")
 
 
-```
+
 
 # I intended to perform axial conditions with $a$ = $\sqrt{2}$, but the corresponding
 # preview times and match scores were messy. Thus, in the interest of defining
@@ -549,7 +536,6 @@ knitr::kable(df3, format = "markdown")
 # their browsing time.
 
 
-```{r echo = FALSE}
 
 par(mfrow = c(1, 2))
 
